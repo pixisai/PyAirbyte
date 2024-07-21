@@ -43,7 +43,6 @@ from airbyte.progress import progress
 from airbyte.strategies import WriteStrategy
 from airbyte.types import SQLTypeConverter
 
-
 if TYPE_CHECKING:
     from collections.abc import Generator
 
@@ -134,14 +133,14 @@ class SqlProcessorBase(RecordProcessorBase):
     # Constructor:
 
     def __init__(
-        self,
-        *,
-        sql_config: SqlConfig,
-        catalog_provider: CatalogProvider,
-        state_writer: StateWriterBase | None = None,
-        file_writer: FileWriterBase | None = None,
-        temp_dir: Path | None = None,
-        temp_file_cleanup: bool,
+            self,
+            *,
+            sql_config: SqlConfig,
+            catalog_provider: CatalogProvider,
+            state_writer: StateWriterBase | None = None,
+            file_writer: FileWriterBase | None = None,
+            temp_dir: Path | None = None,
+            temp_file_cleanup: bool,
     ) -> None:
         if not temp_dir and not file_writer:
             raise exc.PyAirbyteInternalError(
@@ -201,8 +200,8 @@ class SqlProcessorBase(RecordProcessorBase):
         del connection
 
     def get_sql_table_name(
-        self,
-        stream_name: str,
+            self,
+            stream_name: str,
     ) -> str:
         """Return the name of the SQL table for the given stream."""
         table_prefix = self.sql_config.table_prefix
@@ -215,8 +214,8 @@ class SqlProcessorBase(RecordProcessorBase):
 
     @final
     def get_sql_table(
-        self,
-        stream_name: str,
+            self,
+            stream_name: str,
     ) -> sqlalchemy.Table:
         """Return the main table object for the stream."""
         return self._get_table_by_name(
@@ -226,9 +225,9 @@ class SqlProcessorBase(RecordProcessorBase):
     # Record processing:
 
     def process_record_message(
-        self,
-        record_msg: AirbyteRecordMessage,
-        stream_record_handler: StreamRecordHandler,
+            self,
+            record_msg: AirbyteRecordMessage,
+            stream_record_handler: StreamRecordHandler,
     ) -> None:
         """Write a record to the cache.
 
@@ -253,8 +252,8 @@ class SqlProcessorBase(RecordProcessorBase):
         pass
 
     def _invalidate_table_cache(
-        self,
-        table_name: str,
+            self,
+            table_name: str,
     ) -> None:
         """Invalidate the the named table cache.
 
@@ -264,11 +263,11 @@ class SqlProcessorBase(RecordProcessorBase):
             del self._cached_table_definitions[table_name]
 
     def _get_table_by_name(
-        self,
-        table_name: str,
-        *,
-        force_refresh: bool = False,
-        shallow_okay: bool = False,
+            self,
+            table_name: str,
+            *,
+            force_refresh: bool = False,
+            shallow_okay: bool = False,
     ) -> sqlalchemy.Table:
         """Return a table object from a table name.
 
@@ -304,7 +303,7 @@ class SqlProcessorBase(RecordProcessorBase):
         return self._cached_table_definitions[table_name]
 
     def _ensure_schema_exists(
-        self,
+            self,
     ) -> None:
         """Return a new (unique) temporary table name."""
         schema_name = self.sql_config.schema_name
@@ -327,7 +326,7 @@ class SqlProcessorBase(RecordProcessorBase):
         if DEBUG_MODE:
             found_schemas = self._get_schemas_list()
             assert (
-                schema_name in found_schemas
+                    schema_name in found_schemas
             ), f"Schema {schema_name} was not created. Found: {found_schemas}"
 
     def _quote_identifier(self, identifier: str) -> str:
@@ -336,27 +335,27 @@ class SqlProcessorBase(RecordProcessorBase):
 
     @final
     def _get_temp_table_name(
-        self,
-        stream_name: str,
-        batch_id: str | None = None,  # ULID of the batch
+            self,
+            stream_name: str,
+            batch_id: str | None = None,  # ULID of the batch
     ) -> str:
         """Return a new (unique) temporary table name."""
         batch_id = batch_id or str(ulid.ULID())
         return self.normalizer.normalize(f"{stream_name}_{batch_id}")
 
     def _fully_qualified(
-        self,
-        table_name: str,
+            self,
+            table_name: str,
     ) -> str:
         """Return the fully qualified name of the given table."""
         return f"{self.sql_config.schema_name}.{self._quote_identifier(table_name)}"
 
     @final
     def _create_table_for_loading(
-        self,
-        /,
-        stream_name: str,
-        batch_id: str,
+            self,
+            /,
+            stream_name: str,
+            batch_id: str,
     ) -> str:
         """Create a new table for loading data."""
         temp_table_name = self._get_temp_table_name(stream_name, batch_id)
@@ -369,7 +368,7 @@ class SqlProcessorBase(RecordProcessorBase):
         return temp_table_name
 
     def _get_tables_list(
-        self,
+            self,
     ) -> list[str]:
         """Return a list of all tables in the database."""
         with self.get_sql_connection() as conn:
@@ -377,10 +376,10 @@ class SqlProcessorBase(RecordProcessorBase):
             return inspector.get_table_names(schema=self.sql_config.schema_name)
 
     def _get_schemas_list(
-        self,
-        database_name: str | None = None,
-        *,
-        force_refresh: bool = False,
+            self,
+            database_name: str | None = None,
+            *,
+            force_refresh: bool = False,
     ) -> list[str]:
         """Return a list of all tables in the database."""
         if not force_refresh and self._known_schemas_list:
@@ -393,15 +392,15 @@ class SqlProcessorBase(RecordProcessorBase):
             found_schema.split(".")[-1].strip('"')
             for found_schema in found_schemas
             if "." not in found_schema
-            or (found_schema.split(".")[0].lower().strip('"') == database_name.lower())
+               or (found_schema.split(".")[0].lower().strip('"') == database_name.lower())
         ]
         return self._known_schemas_list
 
     def _ensure_final_table_exists(
-        self,
-        stream_name: str,
-        *,
-        create_if_missing: bool = True,
+            self,
+            stream_name: str,
+            *,
+            create_if_missing: bool = True,
     ) -> str:
         """Create the final table if it doesn't already exist.
 
@@ -421,9 +420,9 @@ class SqlProcessorBase(RecordProcessorBase):
         return table_name
 
     def _ensure_compatible_table_schema(
-        self,
-        stream_name: str,
-        table_name: str,
+            self,
+            stream_name: str,
+            table_name: str,
     ) -> None:
         """Return true if the given table is compatible with the stream's schema.
 
@@ -440,10 +439,10 @@ class SqlProcessorBase(RecordProcessorBase):
 
     @final
     def _create_table(
-        self,
-        table_name: str,
-        column_definition_str: str,
-        primary_keys: list[str] | None = None,
+            self,
+            table_name: str,
+            column_definition_str: str,
+            primary_keys: list[str] | None = None,
     ) -> None:
         if primary_keys:
             pk_str = ", ".join(primary_keys)
@@ -458,8 +457,8 @@ class SqlProcessorBase(RecordProcessorBase):
 
     @final
     def _get_sql_column_definitions(
-        self,
-        stream_name: str,
+            self,
+            stream_name: str,
     ) -> dict[str, sqlalchemy.types.TypeEngine]:
         """Return the column definitions for the given stream."""
         columns: dict[str, sqlalchemy.types.TypeEngine] = {}
@@ -478,9 +477,9 @@ class SqlProcessorBase(RecordProcessorBase):
 
     @final
     def write_stream_data(
-        self,
-        stream_name: str,
-        write_strategy: WriteStrategy,
+            self,
+            stream_name: str,
+            write_strategy: WriteStrategy,
     ) -> list[BatchHandle]:
         """Finalize all uncommitted batches.
 
@@ -544,8 +543,8 @@ class SqlProcessorBase(RecordProcessorBase):
     @final
     @contextlib.contextmanager
     def finalizing_batches(
-        self,
-        stream_name: str,
+            self,
+            stream_name: str,
     ) -> Generator[list[BatchHandle], str, None]:
         """Context manager to use for finalizing batches, if applicable.
 
@@ -580,8 +579,8 @@ class SqlProcessorBase(RecordProcessorBase):
             try:
                 result = conn.execute(sql)
             except (
-                sqlalchemy.exc.ProgrammingError,
-                sqlalchemy.exc.SQLAlchemyError,
+                    sqlalchemy.exc.ProgrammingError,
+                    sqlalchemy.exc.SQLAlchemyError,
             ) as ex:
                 msg = f"Error when executing SQL:\n{sql}\n{type(ex).__name__}{ex!s}"
                 raise SQLRuntimeError(msg) from None  # from ex
@@ -589,20 +588,20 @@ class SqlProcessorBase(RecordProcessorBase):
         return result
 
     def _drop_temp_table(
-        self,
-        table_name: str,
-        *,
-        if_exists: bool = True,
+            self,
+            table_name: str,
+            *,
+            if_exists: bool = True,
     ) -> None:
         """Drop the given table."""
         exists_str = "IF EXISTS" if if_exists else ""
         self._execute_sql(f"DROP TABLE {exists_str} {self._fully_qualified(table_name)}")
 
     def _write_files_to_new_table(
-        self,
-        files: list[Path],
-        stream_name: str,
-        batch_id: str,
+            self,
+            files: list[Path],
+            stream_name: str,
+            batch_id: str,
     ) -> str:
         """Write a file(s) to a new table.
 
@@ -646,10 +645,10 @@ class SqlProcessorBase(RecordProcessorBase):
         return temp_table_name
 
     def _add_column_to_table(
-        self,
-        table: Table,
-        column_name: str,
-        column_type: sqlalchemy.types.TypeEngine,
+            self,
+            table: Table,
+            column_name: str,
+            column_type: sqlalchemy.types.TypeEngine,
     ) -> None:
         """Add a column to the given table."""
         self._execute_sql(
@@ -660,9 +659,9 @@ class SqlProcessorBase(RecordProcessorBase):
         )
 
     def _add_missing_columns_to_table(
-        self,
-        stream_name: str,
-        table_name: str,
+            self,
+            stream_name: str,
+            table_name: str,
     ) -> None:
         """Add missing columns to the table.
 
@@ -696,11 +695,11 @@ class SqlProcessorBase(RecordProcessorBase):
 
     @final
     def _write_temp_table_to_final_table(
-        self,
-        stream_name: str,
-        temp_table_name: str,
-        final_table_name: str,
-        write_strategy: WriteStrategy,
+            self,
+            stream_name: str,
+            temp_table_name: str,
+            final_table_name: str,
+            write_strategy: WriteStrategy,
     ) -> None:
         """Write the temp table into the final table using the provided write strategy."""
         has_pks: bool = bool(self._get_primary_keys(stream_name))
@@ -772,10 +771,10 @@ class SqlProcessorBase(RecordProcessorBase):
         )
 
     def _append_temp_table_to_final_table(
-        self,
-        temp_table_name: str,
-        final_table_name: str,
-        stream_name: str,
+            self,
+            temp_table_name: str,
+            final_table_name: str,
+            stream_name: str,
     ) -> None:
         nl = "\n"
         columns = [self._quote_identifier(c) for c in self._get_sql_column_definitions(stream_name)]
@@ -791,14 +790,19 @@ class SqlProcessorBase(RecordProcessorBase):
         )
 
     def _get_primary_keys(
-        self,
-        stream_name: str,
+            self,
+            stream_name: str,
     ) -> list[str]:
         pks = self.catalog_provider.get_configured_stream_info(stream_name).primary_key
+        normalized_pks = []
         if not pks:
             return []
-
-        joined_pks = [".".join(pk) for pk in pks]
+        for pk in pks:
+            internal_list = []
+            for k in pk:
+                internal_list.append(self.normalizer.normalize(k))
+            normalized_pks.append(internal_list)
+        joined_pks = [".".join(pk) for pk in normalized_pks]
         for pk in joined_pks:
             if "." in pk:
                 msg = f"Nested primary keys are not yet supported. Found: {pk}"
@@ -807,16 +811,16 @@ class SqlProcessorBase(RecordProcessorBase):
         return joined_pks
 
     def _get_incremental_key(
-        self,
-        stream_name: str,
+            self,
+            stream_name: str,
     ) -> str | None:
         return self.catalog_provider.get_configured_stream_info(stream_name).cursor_field
 
     def _swap_temp_table_with_final_table(
-        self,
-        stream_name: str,
-        temp_table_name: str,
-        final_table_name: str,
+            self,
+            stream_name: str,
+            temp_table_name: str,
+            final_table_name: str,
     ) -> None:
         """Merge the temp table into the main one.
 
@@ -842,10 +846,10 @@ class SqlProcessorBase(RecordProcessorBase):
         self._execute_sql(commands)
 
     def _merge_temp_table_to_final_table(
-        self,
-        stream_name: str,
-        temp_table_name: str,
-        final_table_name: str,
+            self,
+            stream_name: str,
+            temp_table_name: str,
+            final_table_name: str,
     ) -> None:
         """Merge the temp table into the main one.
 
@@ -899,10 +903,10 @@ class SqlProcessorBase(RecordProcessorBase):
             ) from None
 
     def _emulated_merge_temp_table_to_final_table(
-        self,
-        stream_name: str,
-        temp_table_name: str,
-        final_table_name: str,
+            self,
+            stream_name: str,
+            temp_table_name: str,
+            final_table_name: str,
     ) -> None:
         """Emulate the merge operation using a series of SQL commands.
 
@@ -961,8 +965,8 @@ class SqlProcessorBase(RecordProcessorBase):
             conn.execute(insert_new_records_stmt)
 
     def _table_exists(
-        self,
-        table_name: str,
+            self,
+            table_name: str,
     ) -> bool:
         """Return true if the given table exists.
 
